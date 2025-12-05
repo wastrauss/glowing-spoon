@@ -29,7 +29,7 @@ jobs:
           node-version: '20'
       
       - name: Install js-yaml
-        run: npm install js-yaml
+        run: npm install -g js-yaml
       
       - name: Sort and validate translation files
         id: process-translations
