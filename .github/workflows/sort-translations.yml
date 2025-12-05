@@ -9,10 +9,6 @@ on:
       # - 'locales/**/*.yaml'
       # - 'i18n/**/*.yml'
 
-permissions:
-  contents: write        # Needed to commit changes
-  issues: write          # Needed to open sync-review issues
-
 jobs:
   sort-and-validate-translations:
     runs-on: ubuntu-latest
@@ -34,7 +30,11 @@ jobs:
       - name: Sort and validate translation files
         id: process-translations
         run: |
-          # Find all YAML translation files and sort them
+          # Create a temporary file for validation results
+          echo "" > validation_results.txt
+          HAS_ISSUES=false
+          
+          # Find all YAML translation files
           find . \( -name "*.yml" -o -name "*.yaml" \) -type f | while read file; do
             # Skip workflow files and node_modules
             if [[ "$file" == *".github/workflows"* ]] || \
@@ -42,7 +42,7 @@ jobs:
               continue
             fi
             
-            echo "Sorting $file"
+            echo "Processing $file"
             
             # Sort the YAML file
             node -e "
@@ -54,6 +54,7 @@ jobs:
                 const content = fs.readFileSync(file, 'utf8');
                 const data = yaml.load(content);
                 
+                // Recursive function to sort nested objects
                 function sortObject(obj) {
                   if (Array.isArray(obj)) {
                     return obj.map(sortObject);
@@ -69,6 +70,8 @@ jobs:
                 }
                 
                 const sorted = sortObject(data);
+                
+                // Convert back to YAML with proper formatting
                 const output = yaml.dump(sorted, {
                   indent: 2,
                   lineWidth: -1,
@@ -84,6 +87,146 @@ jobs:
               }
             " "$file"
           done
+          
+          # Now validate and sync translations against English
+          node -e '
+            const yaml = require("js-yaml");
+            const fs = require("fs");
+            const path = require("path");
+            
+            // Configure these paths to match your setup
+            const ENGLISH_FILE = "./translations/en_US.yml"; // Adjust this path
+            const TRANSLATION_DIR = "./translations"; // Adjust this path
+            
+            function getAllKeys(obj, prefix = "") {
+              let keys = [];
+              for (const key in obj) {
+                const fullKey = prefix ? `${prefix}.${key}` : key;
+                if (obj[key] !== null && typeof obj[key] === "object" && !Array.isArray(obj[key])) {
+                  keys = keys.concat(getAllKeys(obj[key], fullKey));
+                } else {
+                  keys.push(fullKey);
+                }
+              }
+              return keys;
+            }
+            
+            function getValueByPath(obj, path) {
+              return path.split(".").reduce((curr, key) => curr?.[key], obj);
+            }
+            
+            function setValueByPath(obj, path, value) {
+              const keys = path.split(".");
+              const lastKey = keys.pop();
+              const target = keys.reduce((curr, key) => {
+                if (!curr[key]) curr[key] = {};
+                return curr[key];
+              }, obj);
+              target[lastKey] = value;
+            }
+            
+            try {
+              // Check if English file exists
+              if (!fs.existsSync(ENGLISH_FILE)) {
+                console.log("⚠️  English translation file not found at:", ENGLISH_FILE);
+                console.log("Please update ENGLISH_FILE path in the workflow.");
+                process.exit(0);
+              }
+              
+              const englishContent = yaml.load(fs.readFileSync(ENGLISH_FILE, "utf8"));
+              const englishKeys = new Set(getAllKeys(englishContent));
+              
+              console.log(`📋 English file has ${englishKeys.size} keys`);
+              
+              // Find all translation files
+              const files = fs.readdirSync(TRANSLATION_DIR)
+                .filter(f => (f.endsWith(".yml") || f.endsWith(".yaml")) && f !== path.basename(ENGLISH_FILE))
+                .map(f => path.join(TRANSLATION_DIR, f));
+              
+              let hasIssues = false;
+              let hasAutoFixes = false;
+              let report = "# Translation Validation Report\n\n";
+              
+              for (const file of files) {
+                const langCode = path.basename(file, path.extname(file));
+                const content = yaml.load(fs.readFileSync(file, "utf8"));
+                const langKeys = new Set(getAllKeys(content));
+                
+                // Find keys in language file but not in English
+                const extraKeys = [...langKeys].filter(k => !englishKeys.has(k));
+                
+                // Find keys in English but not in language file - AUTO-FIX these
+                const missingKeys = [...englishKeys].filter(k => !langKeys.has(k));
+                
+                if (missingKeys.length > 0) {
+                  hasAutoFixes = true;
+                  console.log(`🔧 ${langCode}: Adding ${missingKeys.length} missing keys from English`);
+                  
+                  // Add missing keys with English values
+                  missingKeys.forEach(key => {
+                    const englishValue = getValueByPath(englishContent, key);
+                    setValueByPath(content, key, englishValue);
+                  });
+                  
+                  // Sort the content before saving
+                  function sortObject(obj) {
+                    if (Array.isArray(obj)) {
+                      return obj.map(sortObject);
+                    } else if (obj !== null && typeof obj === "object") {
+                      return Object.keys(obj)
+                        .sort()
+                        .reduce((sorted, key) => {
+                          sorted[key] = sortObject(obj[key]);
+                          return sorted;
+                        }, {});
+                    }
+                    return obj;
+                  }
+                  
+                  const sorted = sortObject(content);
+                  const output = yaml.dump(sorted, {
+                    indent: 2,
+                    lineWidth: -1,
+                    noRefs: true,
+                    quotingType: "\"",
+                    forceQuotes: false
+                  });
+                  
+                  fs.writeFileSync(file, output);
+                }
+                
+                if (extraKeys.length > 0) {
+                  hasIssues = true;
+                  report += `## ⚠️  ${langCode}\n\n`;
+                  report += `### Keys requiring review (present in ${langCode} but missing from English):\n`;
+                  report += `These keys exist in the ${langCode} translation but not in the English reference file. `;
+                  report += `Please review whether these should be added to English or removed from ${langCode}.\n\n`;
+                  extraKeys.forEach(k => report += `- \`${k}\`\n`);
+                  report += "\n";
+                  
+                  console.log(`❌ ${langCode}: ${extraKeys.length} extra keys need review`);
+                } else if (missingKeys.length === 0) {
+                  console.log(`✅ ${langCode}: All keys match English`);
+                }
+              }
+              
+              if (hasAutoFixes) {
+                console.log("\n✅ Missing keys auto-filled with English values");
+              }
+              
+              if (hasIssues) {
+                fs.writeFileSync("validation_results.txt", report);
+                console.log("\n⚠️  Translation validation issues found!");
+                process.exit(1);
+              } else {
+                console.log("\n✅ All translations are in sync!");
+              }
+              
+            } catch (e) {
+              console.log("Error during validation:", e.message);
+              process.exit(0);
+            }
+          '
       
       - name: Check for changes
         id: git-check
@@ -96,5 +239,50 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m "chore: sort translation files alphabetically"
+          git commit -m "chore: sort translation files and sync missing keys from English"
           git push
+      
+      - name: Create issue for translation mismatches
+        if: failure() && steps.process-translations.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read validation results
+            let body = 'Translation validation has detected key mismatches between language files and the English reference file.\n\n';
+            
+            if (fs.existsSync('validation_results.txt')) {
+              body += fs.readFileSync('validation_results.txt', 'utf8');
+            }
+            
+            body += '\n\n---\n**Action required:** Please review and sync the translation files.\n';
+            body += `Commit: ${context.sha}\n`;
+            body += `Triggered by: @${context.actor}`;
+            
+            // Check if there's already an open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'translation-sync'
+            });
+            
+            if (issues.data.length === 0) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '⚠️ Translation Keys Out of Sync',
+                body: body,
+                labels: ['translation-sync', 'needs-review']
+              });
+            } else {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `## New validation run\n\n${body}`
+              });
+            }
