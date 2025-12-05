@@ -1,6 +1,4 @@
 # translations/fr.yml
 t._: " "
+t._adhoctooldiscardlogs: " adHocToolDiscardLogs"
 t._applicationtypemeters: " Compteurs de types d'applications "
-t._circuitstocklogs: " Journaux des stocks de circuits "
-t._dailyproductiondatalogs: " Journaux de données de production quotidiens "
-t._circuitstockforms: " Formulaires CircuitStock "

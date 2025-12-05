@@ -1,6 +1,4 @@
 # translations/es-419.yml
 t._: " "
-t._circuitstocklogs: "Registros de existencias de circuitos"
+t._adhoctooldiscardlogs: " adHocToolDiscardLogs"
 t._applicationtypemeters: "Medidores de tipo de aplicación"
-t._circuitstockforms: "Formularios de stock de circuitos"
-t._circuitstockform: "Formularios de stock de circuito"
