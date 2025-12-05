@@ -29,11 +29,15 @@ jobs:
           node-version: '20'
       
       - name: Install js-yaml
-        run: npm install js-yaml
+        run: |
+          mkdir -p /tmp/node_modules
+          npm install --prefix /tmp/node_modules js-yaml
       
       - name: Sort and validate translation files
         id: process-translations
         run: |
+          export NODE_PATH=/tmp/node_modules/node_modules
+          
           # Create a temporary file for validation results
           echo "" > /tmp/validation_results.txt
           
