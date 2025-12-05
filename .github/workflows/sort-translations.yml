@@ -131,17 +131,11 @@ jobs:
             }
             
             function getValueByPath(obj, path) {
-              return path.split(".").reduce((curr, key) => curr?.[key], obj);
+              return obj[path];
             }
             
             function setValueByPath(obj, path, value) {
-              const keys = path.split(".");
-              const lastKey = keys.pop();
-              const target = keys.reduce((curr, key) => {
-                if (!curr[key]) curr[key] = {};
-                return curr[key];
-              }, obj);
-              target[lastKey] = value;
+              obj[path] = value;
             }
             
             try {
