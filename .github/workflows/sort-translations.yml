@@ -59,7 +59,15 @@ jobs:
               
               try {
                 const content = fs.readFileSync(file, 'utf8');
-                const data = yaml.load(content);
+                const lines = content.split('\\n');
+                let header = [];
+                let yamlStart = 0;
+                while (yamlStart < lines.length && (lines[yamlStart].trim().startsWith('#') || lines[yamlStart].trim() === '')) {
+                  header.push(lines[yamlStart]);
+                  yamlStart++;
+                }
+                const yamlContent = lines.slice(yamlStart).join('\\n');
+                const data = yaml.load(yamlContent);
                 
                 // Recursive function to sort nested objects
                 function sortObject(obj) {
@@ -87,7 +95,8 @@ jobs:
                   forceQuotes: false
                 });
                 
-                fs.writeFileSync(file, output);
+                const finalContent = header.join('\\n') + (header.length > 0 ? '\\n' : '') + output;
+                fs.writeFileSync(file, finalContent);
                 console.log('✓ Sorted successfully');
               } catch (e) {
                 console.log('✗ Error:', e.message);
@@ -140,7 +149,16 @@ jobs:
                 process.exit(0);
               }
               
-              const englishContent = yaml.load(fs.readFileSync(ENGLISH_FILE, "utf8"));
+              const englishFullContent = fs.readFileSync(ENGLISH_FILE, "utf8");
+              const englishLines = englishFullContent.split("\\n");
+              let englishHeader = [];
+              let englishYamlStart = 0;
+              while (englishYamlStart < englishLines.length && (englishLines[englishYamlStart].trim().startsWith("#") || englishLines[englishYamlStart].trim() === "")) {
+                englishHeader.push(englishLines[englishYamlStart]);
+                englishYamlStart++;
+              }
+              const englishYamlContent = englishLines.slice(englishYamlStart).join("\\n");
+              const englishContent = yaml.load(englishYamlContent);
               const englishKeys = new Set(getAllKeys(englishContent));
               
               console.log(`📋 English file has ${englishKeys.size} keys`);
@@ -152,11 +170,20 @@ jobs:
               
               let hasIssues = false;
               let hasAutoFixes = false;
-              let report = "# Translation Validation Report\n\n";
+              let report = "# Translation Validation Report\\n\\n";
               
               for (const file of files) {
                 const langCode = path.basename(file, path.extname(file));
-                const content = yaml.load(fs.readFileSync(file, "utf8"));
+                const fullContent = fs.readFileSync(file, "utf8");
+                const lines = fullContent.split("\\n");
+                let header = [];
+                let yamlStart = 0;
+                while (yamlStart < lines.length && (lines[yamlStart].trim().startsWith("#") || lines[yamlStart].trim() === "")) {
+                  header.push(lines[yamlStart]);
+                  yamlStart++;
+                }
+                const yamlContent = lines.slice(yamlStart).join("\\n");
+                const content = yaml.load(yamlContent);
                 const langKeys = new Set(getAllKeys(content));
                 
                 // Find keys in language file but not in English
@@ -199,17 +226,18 @@ jobs:
                     forceQuotes: false
                   });
                   
-                  fs.writeFileSync(file, output);
+                  const finalContent = header.join("\\n") + (header.length > 0 ? "\\n" : "") + output;
+                  fs.writeFileSync(file, finalContent);
                 }
                 
                 if (extraKeys.length > 0) {
                   hasIssues = true;
-                  report += `## ⚠️  ${langCode}\n\n`;
-                  report += `### Keys requiring review (present in ${langCode} but missing from English):\n`;
+                  report += `## ⚠️  ${langCode}\\n\\n`;
+                  report += `### Keys requiring review (present in ${langCode} but missing from English):\\n`;
                   report += `These keys exist in the ${langCode} translation but not in the English reference file. `;
-                  report += `Please review whether these should be added to English or removed from ${langCode}.\n\n`;
-                  extraKeys.forEach(k => report += `- \`${k}\`\n`);
-                  report += "\n";
+                  report += `Please review whether these should be added to English or removed from ${langCode}.\\n\\n`;
+                  extraKeys.forEach(k => report += `- \\\`${k}\\\`\\n`);
+                  report += "\\n";
                   
                   console.log(`❌ ${langCode}: ${extraKeys.length} extra keys need review`);
                 } else if (missingKeys.length === 0) {
@@ -218,16 +246,16 @@ jobs:
               }
               
               if (hasAutoFixes) {
-                console.log("\n✅ Missing keys auto-filled with English values");
+                console.log("\\n✅ Missing keys auto-filled with English values");
               }
               
               if (hasIssues) {
                 fs.writeFileSync("/tmp/validation_results.txt", report);
-                console.log("\n⚠️  Translation validation issues found!");
+                console.log("\\n⚠️  Translation validation issues found!");
                 // Write a flag file instead of exiting immediately
                 fs.writeFileSync("/tmp/has_validation_issues.txt", "true");
               } else {
-                console.log("\n✅ All translations are in sync!");
+                console.log("\\n✅ All translations are in sync!");
               }
               
             } catch (e) {
