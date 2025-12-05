@@ -9,6 +9,10 @@ on:
       # - 'locales/**/*.yaml'
       # - 'i18n/**/*.yml'
 
+permissions:
+  contents: write        # Needed to commit changes
+  issues: write          # Needed to open sync-review issues
+
 jobs:
   sort-and-validate-translations:
     runs-on: ubuntu-latest
@@ -31,10 +35,10 @@ jobs:
         id: process-translations
         run: |
           # Create a temporary file for validation results
-          echo "" > validation_results.txt
+          echo "" > /tmp/validation_results.txt
           
           # Find all YAML translation files
-          find . \( -name "*.yml" -o -name "*.yaml" \) -type f | while read file; do
+          find "./translations" \( -name "*.yml" -o -name "*.yaml" \) -type f | while read file; do
             # Skip workflow files and node_modules
             if [[ "$file" == *".github/workflows"* ]] || \
                [[ "$file" == *"node_modules"* ]]; then
@@ -214,10 +218,10 @@ jobs:
               }
               
               if (hasIssues) {
-                fs.writeFileSync("validation_results.txt", report);
+                fs.writeFileSync("/tmp/validation_results.txt", report);
                 console.log("\n⚠️  Translation validation issues found!");
                 // Write a flag file instead of exiting immediately
-                fs.writeFileSync("has_validation_issues.txt", "true");
+                fs.writeFileSync("/tmp/has_validation_issues.txt", "true");
               } else {
                 console.log("\n✅ All translations are in sync!");
               }
@@ -245,7 +249,7 @@ jobs:
       - name: Check validation results
         id: check-validation
         run: |
-          if [ -f "has_validation_issues.txt" ]; then
+          if [ -f "/tmp/has_validation_issues.txt" ]; then
             echo "validation_failed=true" >> $GITHUB_OUTPUT
             exit 1
           fi
@@ -260,8 +264,8 @@ jobs:
             // Read validation results
             let body = 'Translation validation has detected key mismatches between language files and the English reference file.\n\n';
             
-            if (fs.existsSync('validation_results.txt')) {
-              body += fs.readFileSync('validation_results.txt', 'utf8');
+            if (fs.existsSync('/tmp/validation_results.txt')) {
+              body += fs.readFileSync('/tmp/validation_results.txt', 'utf8');
             }
             
             body += '\n\n---\n**Action required:** Please review and sync the translation files.\n';
