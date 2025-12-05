@@ -1,4 +1,5 @@
 # translations/en_US.yml
 t._: " "
 t._applicationtypemeters: " applicationTypeMeters"
+t._bdhoctooldiscardlogs: " bdHocToolDiscardLogs"
 t._adhoctooldiscardlogs: " adHocToolDiscardLogs"
