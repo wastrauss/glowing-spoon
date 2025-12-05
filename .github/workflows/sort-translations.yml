@@ -95,7 +95,9 @@ jobs:
                   forceQuotes: false
                 });
                 
-                const finalContent = header.join('\\n') + (header.length > 0 ? '\\n' : '') + output;
+                const unescaped = output.replace(/\\\\u([0-9A-Fa-f]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+                
+                const finalContent = header.join('\\n') + (header.length > 0 ? '\\n' : '') + unescaped;
                 fs.writeFileSync(file, finalContent);
                 console.log('✓ Sorted successfully');
               } catch (e) {
@@ -226,7 +228,9 @@ jobs:
                     forceQuotes: false
                   });
                   
-                  const finalContent = header.join("\\n") + (header.length > 0 ? "\\n" : "") + output;
+                  const unescaped = output.replace(/\\\\u([0-9A-Fa-f]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+                  
+                  const finalContent = header.join("\\n") + (header.length > 0 ? "\\n" : "") + unescaped;
                   fs.writeFileSync(file, finalContent);
                 }
                 
