@@ -236,6 +236,8 @@ jobs:
         id: git-check
         if: always()  # Run even if validation found issues
         run: |
+          # Remove npm artifacts before checking for changes
+          rm -rf node_modules package-lock.json package.json validation_results.txt
           git diff --exit-code || echo "changes=true" >> $GITHUB_OUTPUT
       
       - name: Commit and push if changed
