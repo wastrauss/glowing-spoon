@@ -92,7 +92,7 @@ jobs:
                   lineWidth: -1,
                   noRefs: true,
                   quotingType: '\"',
-                  forceQuotes: false
+                  forceQuotes: true
                 });
                 
                 output = output.replace(/\\\\u([0-9A-Fa-f]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
@@ -226,7 +226,7 @@ jobs:
                     lineWidth: -1,
                     noRefs: true,
                     quotingType: "\"",
-                    forceQuotes: false
+                    forceQuotes: true
                   });
                   
                   output = output.replace(/\\\\u([0-9A-Fa-f]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
