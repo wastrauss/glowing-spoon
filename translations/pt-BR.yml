@@ -1,7 +1,4 @@
 # translations/pt-BR.yml
 t._: " "
-t._dailyproductiondatalogs: "Registros diários de dados de produção"
+t._adhoctooldiscardlogs: " adHocToolDiscardLogs"
 t._applicationtypemeters: "Medidores de tipo de aplicativo"
-t._circuitstockforms: "Formulários de estoque de circuitos"
-t._circuitstocklogs: "Registros de estoque de circuitos"
-t._discardphotos: "Descartar fotos"
