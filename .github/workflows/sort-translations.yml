@@ -87,7 +87,7 @@ jobs:
                 const sorted = sortObject(data);
                 
                 // Convert back to YAML with proper formatting
-                const output = yaml.dump(sorted, {
+                let output = yaml.dump(sorted, {
                   indent: 2,
                   lineWidth: -1,
                   noRefs: true,
@@ -95,9 +95,10 @@ jobs:
                   forceQuotes: false
                 });
                 
-                const unescaped = output.replace(/\\u([0-9A-Fa-f]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+                output = output.replace(/\\\\u([0-9A-Fa-f]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+                output = output.replace(/\\\\_/g, '\\u00A0');
                 
-                const finalContent = header.join('\\n') + (header.length > 0 ? '\\n' : '') + unescaped;
+                const finalContent = header.join('\\n') + (header.length > 0 ? '\\n' : '') + output;
                 fs.writeFileSync(file, finalContent);
                 console.log('✓ Sorted successfully');
               } catch (e) {
@@ -220,7 +221,7 @@ jobs:
                   }
                   
                   const sorted = sortObject(content);
-                  const output = yaml.dump(sorted, {
+                  let output = yaml.dump(sorted, {
                     indent: 2,
                     lineWidth: -1,
                     noRefs: true,
@@ -228,9 +229,10 @@ jobs:
                     forceQuotes: false
                   });
                   
-                  const unescaped = output.replace(/\\u([0-9A-Fa-f]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+                  output = output.replace(/\\\\u([0-9A-Fa-f]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+                  output = output.replace(/\\\\_/g, "\\u00A0");
                   
-                  const finalContent = header.join("\\n") + (header.length > 0 ? "\\n" : "") + unescaped;
+                  const finalContent = header.join("\\n") + (header.length > 0 ? "\\n" : "") + output;
                   fs.writeFileSync(file, finalContent);
                 }
                 
