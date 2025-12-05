@@ -32,7 +32,6 @@ jobs:
         run: |
           # Create a temporary file for validation results
           echo "" > validation_results.txt
-          HAS_ISSUES=false
           
           # Find all YAML translation files
           find . \( -name "*.yml" -o -name "*.yaml" \) -type f | while read file; do
@@ -217,7 +216,8 @@ jobs:
               if (hasIssues) {
                 fs.writeFileSync("validation_results.txt", report);
                 console.log("\n⚠️  Translation validation issues found!");
-                process.exit(1);
+                // Write a flag file instead of exiting immediately
+                fs.writeFileSync("has_validation_issues.txt", "true");
               } else {
                 console.log("\n✅ All translations are in sync!");
               }
@@ -242,8 +242,16 @@ jobs:
           git commit -m "chore: sort translation files and sync missing keys from English"
           git push
       
+      - name: Check validation results
+        id: check-validation
+        run: |
+          if [ -f "has_validation_issues.txt" ]; then
+            echo "validation_failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
       - name: Create issue for translation mismatches
-        if: failure() && steps.process-translations.outcome == 'failure'
+        if: failure() && steps.check-validation.outputs.validation_failed == 'true'
         uses: actions/github-script@v7
         with:
           script: |
