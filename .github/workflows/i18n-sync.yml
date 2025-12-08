@@ -66,6 +66,7 @@ jobs:
         with:
           title: "⚠️ Orphaned Translation Keys"
           content-filepath: ./orphan_report.md
+          assignees: ${{ github.actor }} # Assigns the person who pushed the code
           labels: |
             maintenance
             i18n
