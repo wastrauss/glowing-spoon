@@ -38,7 +38,7 @@ jobs:
           
           # Check for changes
           if [[ -n $(git status -s) ]]; then
-            git add locales/*.yml
+            git add translations/*.yml
             git commit -m "chore: auto-sort and sync translation keys"
             
             # Set the remote URL to use the GITHUB_TOKEN for authentication
