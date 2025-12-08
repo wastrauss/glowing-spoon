@@ -2,8 +2,8 @@ const fs = require('fs');
 const yaml = require('js-yaml'); // Standard parser
 
 // --- CONFIGURATION ---
-const ENGLISH_FILE = 'locales/en.yml';
-const TARGET_FILES = ['locales/fr.yml', 'locales/es.yml', 'locales/de.yml'];
+const ENGLISH_FILE = 'translations/en_US.yml';
+const TARGET_FILES = ['translations/es-419.yml', 'translations/fr.yml', 'translations/pt-BR.yml', 'translations/sv-SE.yml'];
 
 // Helper to write file with enforced "key": "value" formatting
 function writeCustomYaml(filepath, data) {
