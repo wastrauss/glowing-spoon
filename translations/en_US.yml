@@ -1,6 +1,6 @@
 # translations/en_US.yml
 t._: " "
-t._circuitstockforms: " circuitStockForms"
 t._circuitstocklogs: " circuitStockLogs"
 t._adhoctooldiscardlogs: " adHocToolDiscardLogs"
+t._circuitstockforms: " circuitStockForms"
 t._applicationtypemeters: " applicationTypeMeters"
