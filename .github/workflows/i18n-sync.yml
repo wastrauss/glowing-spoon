@@ -3,7 +3,7 @@ name: Sync & Sort Translations
 on:
   push:
     paths:
-      - 'locales/*.yml' # Only run when translation files change
+      - 'translations/*.yml' # Only run when translation files change
   workflow_dispatch:
 
 permissions:
