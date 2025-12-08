@@ -3,7 +3,7 @@ name: Sync & Sort Translations
 on:
   push:
     paths:
-      - 'translations/*.yml' # Only run when translation files change
+      - 'translations/*.yml' # Updated to translations folder
   workflow_dispatch:
 
 permissions:
@@ -23,25 +23,27 @@ jobs:
           node-version: '20'
 
       - name: Install Dependencies
-        # We install js-yaml on the fly so you don't need it in your package.json
         run: npm install js-yaml
 
       - name: Run Translation Manager
         run: node scripts/translation-manager.js
 
       - name: Commit and Push Changes
-        env: 
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
+          # Updated email as requested
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Check for changes
+          # Check for changes in the translations folder
           if [[ -n $(git status -s) ]]; then
             git add translations/*.yml
-            git commit -m "chore: auto-sort and sync translation keys"
             
-            # Set the remote URL to use the GITHUB_TOKEN for authentication
+            # [skip ci] prevents infinite loops
+            git commit -m "chore: auto-sort and sync translation keys [skip ci]"
+            
+            # Authenticate using the token
             git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
             
             git push
