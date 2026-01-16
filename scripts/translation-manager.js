@@ -3,12 +3,13 @@ const yaml = require('js-yaml');
 
 // --- CONFIGURATION ---
 const ENGLISH_FILE = 'translations/en_US.yml';
-const TARGET_FILES = [
-    'translations/es-419.yml', 
-    'translations/fr.yml', 
-    'translations/pt-BR.yml', 
-    'translations/sv-SE.yml'
-];
+const TRANSLATIONS_DIR = 'translations';
+
+// Dynamic discovery: Find all other .yml files in translations/ and sort them
+const TARGET_FILES = fs.readdirSync(TRANSLATIONS_DIR)
+    .filter(name => name.endsWith('.yml') && name !== 'en_US.yml')
+    .sort()
+    .map(name => `${TRANSLATIONS_DIR}/${name}`);
 
 function loadFileWithHeader(filepath) {
     if (!fs.existsSync(filepath)) return { header: '', data: {} };
@@ -28,7 +29,7 @@ function loadFileWithHeader(filepath) {
 function writeCustomYaml(filepath, header, data) {
     const stream = fs.createWriteStream(filepath);
     if (header) stream.write(`${header}\n`);
-    
+
     const sortedKeys = Object.keys(data).sort();
     sortedKeys.forEach(key => {
         stream.write(`${key}: ${JSON.stringify(data[key])}\n`);
@@ -50,11 +51,11 @@ function main() {
     TARGET_FILES.forEach(targetPath => {
         const targetSource = loadFileWithHeader(targetPath);
         const targetMap = targetSource.data;
-        
+
         Object.entries(enSource.data).forEach(([enKey, enValue]) => {
             if (!Object.prototype.hasOwnProperty.call(targetMap, enKey)) {
                 console.log(`[${targetPath}] Adding missing key: ${enKey}`);
-                targetMap[enKey] = enValue; 
+                targetMap[enKey] = enValue;
             }
         });
 
