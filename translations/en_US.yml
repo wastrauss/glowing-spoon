@@ -1,9 +1,9 @@
 # translations/en_US.yml
 t._: " "
 t._adhoctooldiscardlogs: " adHocToolDiscardLogs"
-t._applicationtypemeters: " applicationTypeMeters"
 t._circuitstockforms: " circuitStockForms"
-t._circuitstocklogs: " circuitStockLogs"
+t._applicationtypemeters: " applicationTypeMeters"
 t._typemeters: "meter"
 t.ztypemeters: "zmeter"
 t.atypemeters: "ameter"
+t._circuitstocklogs: " circuitStockLogs"
