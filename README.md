@@ -2,7 +2,7 @@
 
 This repository includes an automated workflow to maintain the hygiene of our translation files (`translations/*.yml`).
 
-### What it does
+### What it does .
 1.  **Alphabetizes Keys:** Automatically sorts all keys in all translation files to prevent merge conflicts and keep files tidy.
 2.  **Syncs Structure:** If a key exists in English (`en_US.yml`) but is missing in other languages (e.g., `fr.yml`), it automatically adds the key to the target file (using the English value as a placeholder).
 3.  **Detects Orphans:** Checks for keys that exist in foreign files but have been deleted from the English source.
